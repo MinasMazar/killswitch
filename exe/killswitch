@@ -8,4 +8,5 @@ if emacs_distros.include? ARGV[0]
   cmd = "rm ~/.emacs.d; ln -sf ~/emacs/distributions/#{ARGV[0]}/.emacs.d ~/.emacs.d"
   puts cmd
   system cmd
+  system "emacs &"
 end
