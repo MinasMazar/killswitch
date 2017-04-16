@@ -1,12 +1,35 @@
 #!/bin/env ruby
+require 'killswitch'
+require 'thor'
 
-emacs_distros = Dir[File.expand_path(File.join("~", "emacs", "distributions", "*"))]
-                .select { |d| File.directory? d }
-                .map {|d| d.split(File::SEPARATOR).last }
-puts emacs_distros
-if emacs_distros.include? ARGV[0]
-  cmd = "rm ~/.emacs.d; ln -sf ~/emacs/distributions/#{ARGV[0]}/.emacs.d ~/.emacs.d"
-  puts cmd
-  system cmd
-  system "emacs &"
+module Killswitch
+  class CLI < Thor
+
+    no_commands do
+      def emacs_distros
+        @emacs_distro ||= Dir[File.expand_path(File.join("~", "emacs", "distributions", "*"))]
+          .select { |d| File.directory? d }
+          .map {|d| d.split(File::SEPARATOR).last }
+      end
+    end
+
+    desc "switch DISTRO", "Symlinks target emacs distribution"
+    option :open, type: :boolean, default: true
+    def switch(distro)
+      puts "Detected #{emacs_distros.size} emacs distros:"
+      emacs_distros.each_with_index do |distro, i|
+        puts "#{i}) #{distro}"
+      end
+      if emacs_distros.include? distro
+        cmd = "rm ~/.emacs.d; ln -sf ~/emacs/distributions/#{distro}/.emacs.d ~/.emacs.d"
+        puts "Executing command: #{cmd}"
+        system cmd
+        system "emacs &" if options[:open]
+      end
+    end
+
+    default_task :switch
+  end
 end
+
+Killswitch::CLI.start ARGV
